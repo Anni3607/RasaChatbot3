@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>To-Do Wellness Bot</title>
+  <style>
+    /* ===== Base styles ===== */
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #eef5f2;
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ===== Chat Button ===== */
+    #chatButton {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      width: 70px;
+      height: 70px;
+      background-color: #2e7d32;
+      color: white;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+      transition: all 0.3s ease;
+    }
+    #chatButton:hover {
+      transform: scale(1.1);
+      background-color: #1b5e20;
+    }
+
+    /* ===== Chat Container ===== */
+    #chatContainer {
+      position: fixed;
+      bottom: 100px;
+      right: 25px;
+      width: 380px;
+      height: 500px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      animation: fadeInUp 0.4s ease;
+      border: 2px solid #2e7d32;
+    }
+
+    #chatHeader {
+      background-color: #2e7d32;
+      color: white;
+      padding: 16px;
+      font-size: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    #chatbox {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      background: #f9fafb;
+    }
+
+    /* ===== Messages ===== */
+    .bot, .user {
+      margin: 6px;
+      padding: 12px 16px;
+      border-radius: 15px;
+      max-width: 75%;
+      word-wrap: break-word;
+      animation: fadeIn 0.3s ease;
+      line-height: 1.4;
+    }
+
+    .bot {
+      background: #e8f5e9;
+      align-self: flex-start;
+      position: relative;
+    }
+    .bot::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -8px;
+      width: 0;
+      height: 0;
+      border-top: 8px solid #e8f5e9;
+      border-right: 8px solid transparent;
+    }
+
+    .user {
+      background: #c8e6c9;
+      align-self: flex-end;
+      text-align: right;
+      position: relative;
+    }
+    .user::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: -8px;
+      width: 0;
+      height: 0;
+      border-top: 8px solid #c8e6c9;
+      border-left: 8px solid transparent;
+    }
+
+    /* ===== Input ===== */
+    #inputContainer {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+      background: #fff;
+    }
+
+    #userInput {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 25px;
+      border: 1px solid #ccc;
+      outline: none;
+      transition: border 0.3s ease;
+    }
+    #userInput:focus {
+      border-color: #2e7d32;
+    }
+
+    #sendButton {
+      margin-left: 10px;
+      background-color: #2e7d32;
+      border: none;
+      border-radius: 50%;
+      color: white;
+      width: 45px;
+      height: 45px;
+      cursor: pointer;
+      font-size: 20px;
+      transition: background 0.3s ease;
+    }
+    #sendButton:hover {
+      background-color: #1b5e20;
+    }
+
+    /* ===== Animations ===== */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <button id="chatButton">📝</button>
+
+  <div id="chatContainer">
+    <div id="chatHeader">To-Do Wellness Bot</div>
+    <div id="chatbox"></div>
+    <div id="inputContainer">
+      <input id="userInput" type="text" placeholder="Type your message..." onkeypress="handleKey(event)">
+      <button id="sendButton" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+  <script>
+    const chatButton = document.getElementById("chatButton");
+    const chatContainer = document.getElementById("chatContainer");
+    const chatbox = document.getElementById("chatbox");
+    const input = document.getElementById("userInput");
+
+    chatButton.onclick = () => {
+      chatContainer.style.display = chatContainer.style.display === "flex" ? "none" : "flex";
+      input.focus();
+    };
+
+    // Send user message and get bot response
+    async function sendMessage(message = null) {
+      const text = message || input.value.trim();
+      if (!text) return;
+
+      // Show user message
+      chatbox.innerHTML += `<div class="user">${text}</div>`;
+      input.value = "";
+      chatbox.scrollTop = chatbox.scrollHeight;
+
+      try {
+        const response = await fetch("http://localhost:5005/webhooks/rest/webhook", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sender: "user", message: text })
+        });
+
+        const data = await response.json();
+        data.forEach(msg => {
+          if (msg.text) {
+            chatbox.innerHTML += `<div class="bot">${msg.text}</div>`;
+          }
+        });
+        chatbox.scrollTop = chatbox.scrollHeight;
+      } catch (err) {
+        chatbox.innerHTML += `<div class="bot">⚠️ Can't connect to the Rasa server.</div>`;
+      }
+    }
+
+    function handleKey(e) {
+      if (e.key === "Enter") sendMessage();
+    }
+  </script>
+
+</body>
+</html>

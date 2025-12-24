@@ -1,0 +1,48 @@
+intents:
+  - greet
+  - help
+  - add_task
+  - show_tasks
+  - stress_check
+  - inform_stress_level
+  - mark_done
+
+entities:
+  - task
+  - deadline
+  - priority
+  - stress_level
+
+
+slots:
+  task_log:
+    type: list
+    initial_value: []
+
+responses:
+  utter_greet:
+    - text: "Hey there! I'm your To-Do assistant. How can I help you today?"
+  utter_goodbye:
+    - text: "Goodbye! Take care 😊"
+  utter_help:
+    - text: |
+        I can do the following:
+        1️⃣ Add a task with deadline and priority.
+        2️⃣ Show all your saved tasks.
+        3️⃣ Ask how stressed you feel and give suggestions.
+  utter_ask_stress:
+    - text: "On a scale of 1 to 10, how stressed are you right now?"
+  utter_task_not_found:
+    - text: "I couldn’t find that task in your list."
+  utter_task_marked_done:
+    - text: "✅ Marked '{task}' as completed!"
+
+actions:
+  - action_add_task
+  - action_show_tasks
+  - action_stress_response
+  - action_mark_task_done
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true
